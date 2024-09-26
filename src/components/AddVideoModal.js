@@ -1,121 +1,123 @@
-// src/components/AddVideoModal.js
 import React, { useState } from 'react';
-import { Modal, Box, Typography, TextField, Button } from '@mui/material';
+import { 
+  Dialog, DialogActions, DialogContent, DialogTitle, 
+  TextField, Button, Grid, Typography, Box 
+} from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { addVideo } from '../api/videoService';
 
 const AddVideoModal = ({ open, onClose, onVideoAdded }) => {
-  const [newVideoData, setNewVideoData] = useState({
+  const { t } = useTranslation();
+  const [videoData, setVideoData] = useState({
     name: '',
     author: '',
-    duration: '',
-    src: '',
     topic: '',
+    duration: '',
+    src: ''
   });
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setNewVideoData({
-      ...newVideoData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setVideoData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
 
-  const handleAddVideo = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!videoData.name || !videoData.author || !videoData.topic || !videoData.duration || !videoData.src) {
+      setError(t('allFieldsRequired'));
+      return;
+    }
+
     try {
-      await addVideo(newVideoData);
+      await addVideo(videoData);
       onVideoAdded();
       onClose();
-    } catch (error) {
-      console.error('Error al agregar el video', error);
+    } catch (err) {
+      setError(t('errorAddingVideo'));
     }
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-    >
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 400,
-          bgcolor: 'background.paper',
-          border: '2px solid #000',
-          boxShadow: 24,
-          p: 4,
-          borderRadius: 2,
-        }}
-      >
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          Agregar Nuevo Video
-        </Typography>
-        <TextField
-          label="Nombre"
-          name="name"
-          fullWidth
-          variant="outlined"
-          value={newVideoData.name}
-          onChange={handleChange}
-          margin="normal"
-        />
-        <TextField
-          label="Autor"
-          name="author"
-          fullWidth
-          variant="outlined"
-          value={newVideoData.author}
-          onChange={handleChange}
-          margin="normal"
-        />
-        <TextField
-          label="Duración (en segundos)"
-          name="duration"
-          type="number"
-          fullWidth
-          variant="outlined"
-          value={newVideoData.duration}
-          onChange={handleChange}
-          margin="normal"
-        />
-        <TextField
-          label="URL del Video"
-          name="src"
-          fullWidth
-          variant="outlined"
-          value={newVideoData.src}
-          onChange={handleChange}
-          margin="normal"
-        />
-        <TextField
-          label="Tema"
-          name="topic"
-          fullWidth
-          variant="outlined"
-          value={newVideoData.topic}
-          onChange={handleChange}
-          margin="normal"
-        />
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleAddVideo}
-            sx={{ mr: 2 }}
-          >
-            Agregar
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{t('addNewVideo')}</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={t('videoName')}
+                name="name"
+                value={videoData.name}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={t('author')}
+                name="author"
+                value={videoData.author}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={t('topic')}
+                name="topic"
+                value={videoData.topic}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={t('duration')}
+                name="duration"
+                value={videoData.duration}
+                onChange={handleChange}
+                required
+                type="number"
+                inputProps={{ min: 0 }}
+                helperText={t('durationInSeconds')}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={t('youtubeLink')}
+                name="src"
+                value={videoData.src}
+                onChange={handleChange}
+                required
+                helperText={t('youtubeLinkHelp')}
+              />
+            </Grid>
+          </Grid>
+          {error && (
+            <Box mt={2}>
+              <Typography color="error">{error}</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>{t('cancel')}</Button>
+          <Button type="submit" variant="contained" color="primary">
+            {t('addVideo')}
           </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={onClose}
-          >
-            Cancelar
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 
